@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta
+      name="description"
+      content="Eagle Nest 是一個可部署到 GitHub Pages 的多 YouTube 直播觀看工具。"
+    >
+    <title>Eagle Nest</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="app-header">
+      <div>
+        <p class="eyebrow">Eagle Nest</p>
+        <h1>多路 YouTube 直播監看</h1>
+      </div>
+      <div class="header-actions" aria-label="全域控制">
+        <button id="muteAllBtn" class="icon-button" type="button" title="靜音全部" aria-pressed="false">
+          <span aria-hidden="true">🔇</span>
+          <span>靜音全部</span>
+        </button>
+        <button id="clearAllBtn" class="ghost-button" type="button">清空</button>
+      </div>
+    </header>
+
+    <main class="app-shell">
+      <section class="control-panel" aria-labelledby="controlTitle">
+        <div class="panel-heading">
+          <div>
+            <h2 id="controlTitle">直播清單</h2>
+            <p>新增 YouTube 直播網址，可自訂每張卡片標題。</p>
+          </div>
+          <div class="grid-toggle" role="group" aria-label="選擇格線">
+            <button class="segmented is-active" type="button" data-grid="2">2x2</button>
+            <button class="segmented" type="button" data-grid="3">3x3</button>
+          </div>
+        </div>
+
+        <form id="streamForm" class="stream-form">
+          <label for="streamTitle">標題</label>
+          <input id="streamTitle" name="title" type="text" placeholder="例如：台北現場">
+
+          <label for="streamUrl">YouTube 直播網址</label>
+          <div class="inline-fields">
+            <input
+              id="streamUrl"
+              name="url"
+              type="url"
+              placeholder="https://www.youtube.com/watch?v=..."
+              required
+            >
+            <button class="primary-button" type="submit">新增</button>
+          </div>
+          <p id="formHint" class="form-hint" role="status" aria-live="polite"></p>
+        </form>
+
+        <details class="bulk-import">
+          <summary>批次貼上多個網址</summary>
+          <label for="bulkInput">每行一筆，可用「標題 | 網址」格式</label>
+          <textarea id="bulkInput" rows="5" placeholder="新聞台 | https://www.youtube.com/watch?v=..."></textarea>
+          <button id="importBtn" class="secondary-button" type="button">匯入清單</button>
+        </details>
+      </section>
+
+      <section class="watch-area" aria-label="直播播放器">
+        <div id="emptyState" class="empty-state">
+          <h2>還沒有直播</h2>
+          <p>新增 YouTube 直播網址後，播放器會出現在這裡。</p>
+        </div>
+        <div id="streamGrid" class="stream-grid grid-2"></div>
+      </section>
+    </main>
+
+    <div id="focusOverlay" class="focus-overlay" hidden>
+      <div class="focus-toolbar">
+        <h2 id="focusTitle"></h2>
+        <button id="closeFocusBtn" class="ghost-button light" type="button">關閉放大</button>
+      </div>
+      <div id="focusPlayer" class="focus-player"></div>
+    </div>
+
+    <template id="streamCardTemplate">
+      <article class="stream-card">
+        <div class="card-topline">
+          <input class="card-title-input" type="text" aria-label="直播標題">
+          <div class="card-actions">
+            <button class="small-button expand-btn" type="button" title="放大">放大</button>
+            <button class="small-button remove-btn" type="button" title="移除">移除</button>
+          </div>
+        </div>
+        <div class="player-frame"></div>
+        <p class="source-url"></p>
+      </article>
+    </template>
+
+    <script src="script.js"></script>
+  </body>
+</html>
