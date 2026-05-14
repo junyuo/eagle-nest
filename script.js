@@ -10,8 +10,8 @@
   const state = loadState();
   const appShell = document.querySelector("#appShell");
   const controlPanel = document.querySelector("#controlPanel");
+  const controlDetails = document.querySelector("#controlDetails");
   const panelBody = document.querySelector("#panelBody");
-  const togglePanelBtn = document.querySelector("#togglePanelBtn");
   const streamForm = document.querySelector("#streamForm");
   const titleInput = document.querySelector("#streamTitle");
   const urlInput = document.querySelector("#streamUrl");
@@ -30,7 +30,7 @@
   const closeFocusBtn = document.querySelector("#closeFocusBtn");
 
   streamForm.addEventListener("submit", handleAddStream);
-  togglePanelBtn.addEventListener("click", togglePanel);
+  controlDetails.addEventListener("toggle", handlePanelToggle);
   importBtn.addEventListener("click", handleBulkImport);
   muteAllBtn.addEventListener("click", toggleMuteAll);
   clearAllBtn.addEventListener("click", clearStreams);
@@ -60,8 +60,8 @@
     titleInput.focus();
   }
 
-  function togglePanel() {
-    state.panelCollapsed = !state.panelCollapsed;
+  function handlePanelToggle() {
+    state.panelCollapsed = !controlDetails.open;
     saveState();
     updateControls();
   }
@@ -314,12 +314,11 @@
 
     appShell.classList.toggle("is-panel-collapsed", state.panelCollapsed);
     controlPanel.classList.toggle("is-collapsed", state.panelCollapsed);
-    panelBody.hidden = state.panelCollapsed;
-    panelBody.style.display = state.panelCollapsed ? "none" : "";
+    if (controlDetails.open === state.panelCollapsed) {
+      controlDetails.open = !state.panelCollapsed;
+    }
     panelBody.setAttribute("aria-hidden", String(state.panelCollapsed));
-    togglePanelBtn.setAttribute("aria-expanded", String(!state.panelCollapsed));
-    togglePanelBtn.title = state.panelCollapsed ? "展開直播清單" : "收合直播清單";
-    togglePanelBtn.querySelector(".collapse-text").textContent = state.panelCollapsed ? "展開" : "收合";
+    controlDetails.querySelector(".collapse-text").textContent = state.panelCollapsed ? "展開" : "收合";
   }
 
   function createId() {

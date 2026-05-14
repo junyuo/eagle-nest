@@ -8,7 +8,7 @@
       content="Eagle Nest 是一個可部署到 GitHub Pages 的多 YouTube 直播觀看工具。"
     >
     <title>Eagle Nest</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=6">
   </head>
   <body>
     <header class="app-header">
@@ -27,55 +27,50 @@
 
     <main id="appShell" class="app-shell">
       <section id="controlPanel" class="control-panel" aria-labelledby="controlTitle">
-        <div class="panel-heading">
-          <div class="panel-title">
-            <h2 id="controlTitle">直播清單</h2>
-            <p>新增 YouTube 直播網址，可自訂每張卡片標題。</p>
-          </div>
-          <button
-            id="togglePanelBtn"
-            class="collapse-button"
-            type="button"
-            aria-controls="panelBody"
-            aria-expanded="true"
-            title="收合直播清單"
-          >
-            <span class="collapse-icon" aria-hidden="true">‹</span>
-            <span class="collapse-text">收合</span>
-          </button>
-        </div>
+        <details id="controlDetails" class="control-details" open>
+          <summary class="panel-heading">
+            <span class="panel-title">
+              <span id="controlTitle" class="panel-title-text">直播清單</span>
+              <span class="panel-description">新增 YouTube 直播網址，可自訂每張卡片標題。</span>
+            </span>
+            <span class="collapse-button" aria-hidden="true">
+              <span class="collapse-icon">‹</span>
+              <span class="collapse-text">收合</span>
+            </span>
+          </summary>
 
-        <div id="panelBody" class="panel-body">
-          <div class="grid-toggle" role="group" aria-label="選擇格線">
-            <button class="segmented is-active" type="button" data-grid="2">2x2</button>
-            <button class="segmented" type="button" data-grid="3">3x3</button>
-          </div>
-
-          <form id="streamForm" class="stream-form">
-            <label for="streamTitle">標題</label>
-            <input id="streamTitle" name="title" type="text" placeholder="例如：台北現場">
-
-            <label for="streamUrl">YouTube 直播網址</label>
-            <div class="inline-fields">
-              <input
-                id="streamUrl"
-                name="url"
-                type="url"
-                placeholder="https://www.youtube.com/watch?v=..."
-                required
-              >
-              <button class="primary-button" type="submit">新增</button>
+          <div id="panelBody" class="panel-body">
+            <div class="grid-toggle" role="group" aria-label="選擇格線">
+              <button class="segmented is-active" type="button" data-grid="2">2x2</button>
+              <button class="segmented" type="button" data-grid="3">3x3</button>
             </div>
-            <p id="formHint" class="form-hint" role="status" aria-live="polite"></p>
-          </form>
 
-          <details class="bulk-import">
-            <summary>批次貼上多個網址</summary>
-            <label for="bulkInput">每行一筆，可用「標題 | 網址」格式</label>
-            <textarea id="bulkInput" rows="5" placeholder="新聞台 | https://www.youtube.com/watch?v=..."></textarea>
-            <button id="importBtn" class="secondary-button" type="button">匯入清單</button>
-          </details>
-        </div>
+            <form id="streamForm" class="stream-form">
+              <label for="streamTitle">標題</label>
+              <input id="streamTitle" name="title" type="text" placeholder="例如：台北現場">
+
+              <label for="streamUrl">YouTube 直播網址</label>
+              <div class="inline-fields">
+                <input
+                  id="streamUrl"
+                  name="url"
+                  type="url"
+                  placeholder="https://www.youtube.com/watch?v=..."
+                  required
+                >
+                <button class="primary-button" type="submit">新增</button>
+              </div>
+              <p id="formHint" class="form-hint" role="status" aria-live="polite"></p>
+            </form>
+
+            <details class="bulk-import">
+              <summary>批次貼上多個網址</summary>
+              <label for="bulkInput">每行一筆，可用「標題 | 網址」格式</label>
+              <textarea id="bulkInput" rows="5" placeholder="新聞台 | https://www.youtube.com/watch?v=..."></textarea>
+              <button id="importBtn" class="secondary-button" type="button">匯入清單</button>
+            </details>
+          </div>
+        </details>
       </section>
 
       <section class="watch-area" aria-label="直播播放器">
@@ -109,6 +104,6 @@
       </article>
     </template>
 
-    <script src="script.js"></script>
+    <script src="script.js?v=6"></script>
   </body>
 </html>
