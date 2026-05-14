@@ -3,10 +3,15 @@
   const DEFAULT_STATE = {
     streams: [],
     gridSize: 2,
-    allMuted: false
+    allMuted: false,
+    panelCollapsed: false
   };
 
   const state = loadState();
+  const appShell = document.querySelector("#appShell");
+  const controlPanel = document.querySelector("#controlPanel");
+  const panelBody = document.querySelector("#panelBody");
+  const togglePanelBtn = document.querySelector("#togglePanelBtn");
   const streamForm = document.querySelector("#streamForm");
   const titleInput = document.querySelector("#streamTitle");
   const urlInput = document.querySelector("#streamUrl");
@@ -25,6 +30,7 @@
   const closeFocusBtn = document.querySelector("#closeFocusBtn");
 
   streamForm.addEventListener("submit", handleAddStream);
+  togglePanelBtn.addEventListener("click", togglePanel);
   importBtn.addEventListener("click", handleBulkImport);
   muteAllBtn.addEventListener("click", toggleMuteAll);
   clearAllBtn.addEventListener("click", clearStreams);
@@ -52,6 +58,12 @@
     titleInput.value = "";
     urlInput.value = "";
     titleInput.focus();
+  }
+
+  function togglePanel() {
+    state.panelCollapsed = !state.panelCollapsed;
+    saveState();
+    updateControls();
   }
 
   function handleBulkImport() {
@@ -299,6 +311,13 @@
 
     muteAllBtn.setAttribute("aria-pressed", String(state.allMuted));
     muteAllBtn.querySelector("span:last-child").textContent = state.allMuted ? "取消靜音" : "靜音全部";
+
+    appShell.classList.toggle("is-panel-collapsed", state.panelCollapsed);
+    controlPanel.classList.toggle("is-collapsed", state.panelCollapsed);
+    panelBody.hidden = state.panelCollapsed;
+    togglePanelBtn.setAttribute("aria-expanded", String(!state.panelCollapsed));
+    togglePanelBtn.title = state.panelCollapsed ? "展開直播清單" : "收合直播清單";
+    togglePanelBtn.querySelector(".collapse-text").textContent = state.panelCollapsed ? "展開" : "收合";
   }
 
   function createId() {
@@ -329,7 +348,8 @@
           })
           .filter(Boolean),
         gridSize: saved.gridSize === 3 ? 3 : 2,
-        allMuted: Boolean(saved.allMuted)
+        allMuted: Boolean(saved.allMuted),
+        panelCollapsed: Boolean(saved.panelCollapsed)
       };
     } catch (error) {
       return { ...DEFAULT_STATE };

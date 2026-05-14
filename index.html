@@ -25,43 +25,57 @@
       </div>
     </header>
 
-    <main class="app-shell">
-      <section class="control-panel" aria-labelledby="controlTitle">
+    <main id="appShell" class="app-shell">
+      <section id="controlPanel" class="control-panel" aria-labelledby="controlTitle">
         <div class="panel-heading">
-          <div>
+          <div class="panel-title">
             <h2 id="controlTitle">直播清單</h2>
             <p>新增 YouTube 直播網址，可自訂每張卡片標題。</p>
           </div>
+          <button
+            id="togglePanelBtn"
+            class="collapse-button"
+            type="button"
+            aria-controls="panelBody"
+            aria-expanded="true"
+            title="收合直播清單"
+          >
+            <span class="collapse-icon" aria-hidden="true">‹</span>
+            <span class="collapse-text">收合</span>
+          </button>
+        </div>
+
+        <div id="panelBody" class="panel-body">
           <div class="grid-toggle" role="group" aria-label="選擇格線">
             <button class="segmented is-active" type="button" data-grid="2">2x2</button>
             <button class="segmented" type="button" data-grid="3">3x3</button>
           </div>
+
+          <form id="streamForm" class="stream-form">
+            <label for="streamTitle">標題</label>
+            <input id="streamTitle" name="title" type="text" placeholder="例如：台北現場">
+
+            <label for="streamUrl">YouTube 直播網址</label>
+            <div class="inline-fields">
+              <input
+                id="streamUrl"
+                name="url"
+                type="url"
+                placeholder="https://www.youtube.com/watch?v=..."
+                required
+              >
+              <button class="primary-button" type="submit">新增</button>
+            </div>
+            <p id="formHint" class="form-hint" role="status" aria-live="polite"></p>
+          </form>
+
+          <details class="bulk-import">
+            <summary>批次貼上多個網址</summary>
+            <label for="bulkInput">每行一筆，可用「標題 | 網址」格式</label>
+            <textarea id="bulkInput" rows="5" placeholder="新聞台 | https://www.youtube.com/watch?v=..."></textarea>
+            <button id="importBtn" class="secondary-button" type="button">匯入清單</button>
+          </details>
         </div>
-
-        <form id="streamForm" class="stream-form">
-          <label for="streamTitle">標題</label>
-          <input id="streamTitle" name="title" type="text" placeholder="例如：台北現場">
-
-          <label for="streamUrl">YouTube 直播網址</label>
-          <div class="inline-fields">
-            <input
-              id="streamUrl"
-              name="url"
-              type="url"
-              placeholder="https://www.youtube.com/watch?v=..."
-              required
-            >
-            <button class="primary-button" type="submit">新增</button>
-          </div>
-          <p id="formHint" class="form-hint" role="status" aria-live="polite"></p>
-        </form>
-
-        <details class="bulk-import">
-          <summary>批次貼上多個網址</summary>
-          <label for="bulkInput">每行一筆，可用「標題 | 網址」格式</label>
-          <textarea id="bulkInput" rows="5" placeholder="新聞台 | https://www.youtube.com/watch?v=..."></textarea>
-          <button id="importBtn" class="secondary-button" type="button">匯入清單</button>
-        </details>
       </section>
 
       <section class="watch-area" aria-label="直播播放器">
