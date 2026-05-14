@@ -17,6 +17,10 @@
   box-sizing: border-box;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
@@ -111,6 +115,7 @@ h2 {
 .control-panel.is-collapsed {
   gap: 0;
   min-height: 180px;
+  overflow: hidden;
   padding: 10px;
 }
 
@@ -173,7 +178,7 @@ h2 {
 .control-panel.is-collapsed .panel-title,
 .control-panel.is-collapsed .panel-body,
 .control-panel.is-collapsed .collapse-text {
-  display: none;
+  display: none !important;
 }
 
 .control-panel.is-collapsed .collapse-button {

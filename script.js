@@ -315,6 +315,8 @@
     appShell.classList.toggle("is-panel-collapsed", state.panelCollapsed);
     controlPanel.classList.toggle("is-collapsed", state.panelCollapsed);
     panelBody.hidden = state.panelCollapsed;
+    panelBody.style.display = state.panelCollapsed ? "none" : "";
+    panelBody.setAttribute("aria-hidden", String(state.panelCollapsed));
     togglePanelBtn.setAttribute("aria-expanded", String(!state.panelCollapsed));
     togglePanelBtn.title = state.panelCollapsed ? "展開直播清單" : "收合直播清單";
     togglePanelBtn.querySelector(".collapse-text").textContent = state.panelCollapsed ? "展開" : "收合";
