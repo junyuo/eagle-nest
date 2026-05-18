@@ -1,11 +1,14 @@
 (function () {
   const STORAGE_KEY = "eagleNestState:v1";
+  const LIVE_SYNC_INTERVAL_MS = 5 * 60 * 1000;
   const DEFAULT_STATE = {
     streams: [],
     gridSize: 2,
     allMuted: false,
-    panelCollapsed: false
+    panelCollapsed: false,
+    autoSync: true
   };
+  let autoSyncTimer = null;
 
   const state = loadState();
   const appShell = document.querySelector("#appShell");
@@ -20,6 +23,8 @@
   const emptyState = document.querySelector("#emptyState");
   const template = document.querySelector("#streamCardTemplate");
   const gridButtons = document.querySelectorAll("[data-grid]");
+  const syncLiveBtn = document.querySelector("#syncLiveBtn");
+  const autoSyncBtn = document.querySelector("#autoSyncBtn");
   const muteAllBtn = document.querySelector("#muteAllBtn");
   const clearAllBtn = document.querySelector("#clearAllBtn");
   const importBtn = document.querySelector("#importBtn");
@@ -32,6 +37,10 @@
   streamForm.addEventListener("submit", handleAddStream);
   controlDetails.addEventListener("toggle", handlePanelToggle);
   importBtn.addEventListener("click", handleBulkImport);
+  syncLiveBtn.addEventListener("click", function () {
+    syncAllStreams(true, true);
+  });
+  autoSyncBtn.addEventListener("click", toggleAutoSync);
   muteAllBtn.addEventListener("click", toggleMuteAll);
   clearAllBtn.addEventListener("click", clearStreams);
   closeFocusBtn.addEventListener("click", closeFocus);
@@ -51,6 +60,7 @@
   });
 
   render();
+  scheduleAutoSync();
 
   function handleAddStream(event) {
     event.preventDefault();
@@ -221,6 +231,74 @@
     }, 200);
   }
 
+  function toggleAutoSync() {
+    state.autoSync = !state.autoSync;
+    saveState();
+    updateControls();
+    scheduleAutoSync();
+    setHint(state.autoSync ? "自動同步已開啟，每 5 分鐘校正一次。" : "自動同步已關閉。", false);
+  }
+
+  function scheduleAutoSync() {
+    if (autoSyncTimer) {
+      clearInterval(autoSyncTimer);
+      autoSyncTimer = null;
+    }
+
+    if (!state.autoSync) return;
+
+    autoSyncTimer = setInterval(function () {
+      syncAllStreams(false, false);
+    }, LIVE_SYNC_INTERVAL_MS);
+  }
+
+  function syncAllStreams(showMessage, hardReload) {
+    const iframes = document.querySelectorAll("iframe[src*='youtube.com/embed']");
+
+    if (!iframes.length) {
+      if (showMessage) setHint("目前沒有可同步的直播。", false);
+      return;
+    }
+
+    iframes.forEach(function (iframe) {
+      syncIframeToLiveEdge(iframe, hardReload);
+    });
+
+    if (showMessage) {
+      setHint("已嘗試將所有播放器同步到直播最新位置。", false);
+    }
+  }
+
+  function syncIframeToLiveEdge(iframe, hardReload) {
+    sendCommand(iframe, "seekTo", [999999999, true]);
+    setTimeout(function () {
+      sendCommand(iframe, "playVideo");
+      if (state.allMuted) sendCommand(iframe, "mute");
+    }, 150);
+
+    if (hardReload) {
+      setTimeout(function () {
+        reloadIframeAtLiveEdge(iframe);
+      }, 350);
+    }
+  }
+
+  function reloadIframeAtLiveEdge(iframe) {
+    if (!iframe || !iframe.src) return;
+
+    const url = new URL(iframe.src);
+    url.searchParams.set("autoplay", "1");
+    url.searchParams.set("live_sync", String(Date.now()));
+
+    if (state.allMuted) {
+      url.searchParams.set("mute", "1");
+    } else {
+      url.searchParams.delete("mute");
+    }
+
+    iframe.src = url.toString();
+  }
+
   function createIframe(stream, autoplay) {
     const iframe = document.createElement("iframe");
     const params = new URLSearchParams({
@@ -248,14 +326,14 @@
     });
   }
 
-  function sendCommand(iframe, command) {
+  function sendCommand(iframe, command, args) {
     if (!iframe || !iframe.contentWindow) return;
 
     iframe.contentWindow.postMessage(
       JSON.stringify({
         event: "command",
         func: command,
-        args: []
+        args: args || []
       }),
       "https://www.youtube.com"
     );
@@ -311,6 +389,8 @@
 
     muteAllBtn.setAttribute("aria-pressed", String(state.allMuted));
     muteAllBtn.querySelector("span:last-child").textContent = state.allMuted ? "取消靜音" : "靜音全部";
+    autoSyncBtn.setAttribute("aria-pressed", String(state.autoSync));
+    autoSyncBtn.textContent = state.autoSync ? "自動同步：開" : "自動同步：關";
 
     appShell.classList.toggle("is-panel-collapsed", state.panelCollapsed);
     controlPanel.classList.toggle("is-collapsed", state.panelCollapsed);
@@ -350,7 +430,8 @@
           .filter(Boolean),
         gridSize: saved.gridSize === 3 ? 3 : 2,
         allMuted: Boolean(saved.allMuted),
-        panelCollapsed: Boolean(saved.panelCollapsed)
+        panelCollapsed: Boolean(saved.panelCollapsed),
+        autoSync: saved.autoSync !== false
       };
     } catch (error) {
       return { ...DEFAULT_STATE };

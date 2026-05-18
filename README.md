@@ -9,6 +9,7 @@ Eagle Nest 是一個純 HTML/CSS/JavaScript 的靜態網站，可同時觀看多
 - 支援 2x2 與 3x3 grid
 - 每個直播卡片可自訂標題
 - 一鍵靜音或取消靜音全部播放器
+- 一鍵同步所有播放器到直播最新時間，並支援每 5 分鐘自動同步
 - 點選單一路直播放大觀看
 - 使用 `localStorage` 記住上次輸入的直播清單
 - 響應式設計，支援手機與桌機
@@ -100,4 +101,3 @@ https://junyuo.github.io/eagle-nest/
 ├── README.md
 └── .nojekyll
 ```
-

@@ -334,6 +334,12 @@ textarea:focus {
   border-color: #ffffff;
 }
 
+.ghost-button[aria-pressed="true"] {
+  color: #10201d;
+  background: #ffffff;
+  border-color: #ffffff;
+}
+
 .icon-button {
   display: inline-flex;
   align-items: center;
