@@ -1,6 +1,7 @@
 (function () {
   const STORAGE_KEY = "eagleNestState:v1";
   const LIVE_SYNC_INTERVAL_MS = 5 * 60 * 1000;
+  const DRAG_ID_TYPE = "text/plain";
   const DEFAULT_STATE = {
     streams: [],
     gridSize: 2,
@@ -159,9 +160,11 @@
       const titleField = card.querySelector(".card-title-input");
       const playerFrame = card.querySelector(".player-frame");
       const sourceUrl = card.querySelector(".source-url");
+      const dragHandle = card.querySelector(".drag-handle");
       const expandBtn = card.querySelector(".expand-btn");
       const removeBtn = card.querySelector(".remove-btn");
 
+      card.dataset.streamId = stream.id;
       titleField.value = stream.title;
       sourceUrl.textContent = stream.url;
       sourceUrl.title = stream.url;
@@ -174,6 +177,19 @@
 
       expandBtn.addEventListener("click", function () {
         openFocus(stream);
+      });
+
+      dragHandle.addEventListener("dragstart", function (event) {
+        handleDragStart(event, stream.id, card);
+      });
+
+      dragHandle.addEventListener("dragend", clearDragState);
+      card.addEventListener("dragover", handleDragOver);
+      card.addEventListener("dragleave", function () {
+        card.classList.remove("is-drop-target");
+      });
+      card.addEventListener("drop", function (event) {
+        handleDrop(event, stream.id, card, shouldInsertAfter(event, card));
       });
 
       removeBtn.addEventListener("click", function () {
@@ -206,6 +222,74 @@
         sendCommand(focusPlayer.querySelector("iframe"), "mute");
       }, 600);
     }
+  }
+
+  function handleDragStart(event, streamId, card) {
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData(DRAG_ID_TYPE, streamId);
+    card.classList.add("is-dragging");
+  }
+
+  function handleDragOver(event) {
+    event.preventDefault();
+    event.currentTarget.classList.add("is-drop-target");
+    event.dataTransfer.dropEffect = "move";
+  }
+
+  function handleDrop(event, targetStreamId, targetCard, insertAfter) {
+    event.preventDefault();
+    const draggedStreamId = event.dataTransfer.getData(DRAG_ID_TYPE);
+    clearDragState();
+
+    if (!draggedStreamId || draggedStreamId === targetStreamId) return;
+
+    reorderStreams(draggedStreamId, targetStreamId, insertAfter);
+    moveDraggedCard(draggedStreamId, targetCard, insertAfter);
+    saveState();
+  }
+
+  function shouldInsertAfter(event, card) {
+    const rect = card.getBoundingClientRect();
+    const lowerHalf = event.clientY > rect.top + rect.height / 2;
+    const rightHalf = event.clientX > rect.left + rect.width / 2;
+    return lowerHalf || rightHalf;
+  }
+
+  function reorderStreams(draggedStreamId, targetStreamId, insertAfter) {
+    const fromIndex = state.streams.findIndex(function (stream) {
+      return stream.id === draggedStreamId;
+    });
+    let toIndex = state.streams.findIndex(function (stream) {
+      return stream.id === targetStreamId;
+    });
+
+    if (fromIndex === -1 || toIndex === -1) return;
+
+    const moved = state.streams.splice(fromIndex, 1)[0];
+    if (fromIndex < toIndex) toIndex -= 1;
+    if (insertAfter) toIndex += 1;
+    state.streams.splice(toIndex, 0, moved);
+  }
+
+  function moveDraggedCard(draggedStreamId, targetCard, insertAfter) {
+    const draggedCard = grid.querySelector("[data-stream-id='" + cssEscape(draggedStreamId) + "']");
+    if (!draggedCard || !targetCard || draggedCard === targetCard) return;
+
+    grid.insertBefore(draggedCard, insertAfter ? targetCard.nextElementSibling : targetCard);
+  }
+
+  function clearDragState() {
+    grid.querySelectorAll(".is-dragging, .is-drop-target").forEach(function (card) {
+      card.classList.remove("is-dragging", "is-drop-target");
+    });
+  }
+
+  function cssEscape(value) {
+    if (window.CSS && typeof window.CSS.escape === "function") {
+      return window.CSS.escape(value);
+    }
+
+    return String(value).replace(/'/g, "\\'");
   }
 
   function closeFocus() {

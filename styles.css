@@ -423,6 +423,16 @@ textarea:focus {
   border: 1px solid var(--border);
   border-radius: 8px;
   box-shadow: 0 8px 22px rgba(24, 36, 33, 0.08);
+  transition: border-color 140ms ease, box-shadow 140ms ease, opacity 140ms ease;
+}
+
+.stream-card.is-dragging {
+  opacity: 0.48;
+}
+
+.stream-card.is-drop-target {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.16), 0 8px 22px rgba(24, 36, 33, 0.08);
 }
 
 .card-topline {
@@ -447,6 +457,14 @@ textarea:focus {
   padding: 0 10px;
   color: var(--text);
   background: var(--surface-strong);
+}
+
+.drag-handle {
+  cursor: grab;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
 }
 
 .remove-btn {
@@ -565,7 +583,7 @@ textarea:focus {
   .header-actions,
   .card-actions {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .stream-grid.grid-2,
