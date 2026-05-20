@@ -423,7 +423,12 @@ textarea:focus {
   border: 1px solid var(--border);
   border-radius: 8px;
   box-shadow: 0 8px 22px rgba(24, 36, 33, 0.08);
+  cursor: grab;
   transition: border-color 140ms ease, box-shadow 140ms ease, opacity 140ms ease;
+}
+
+.stream-card:active {
+  cursor: grabbing;
 }
 
 .stream-card.is-dragging {
@@ -459,12 +464,10 @@ textarea:focus {
   background: var(--surface-strong);
 }
 
-.drag-handle {
-  cursor: grab;
-}
-
-.drag-handle:active {
-  cursor: grabbing;
+.card-title-input,
+.small-button,
+.player-frame iframe {
+  cursor: auto;
 }
 
 .remove-btn {
@@ -583,7 +586,7 @@ textarea:focus {
   .header-actions,
   .card-actions {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: 1fr 1fr;
   }
 
   .stream-grid.grid-2,

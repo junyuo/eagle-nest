@@ -160,7 +160,6 @@
       const titleField = card.querySelector(".card-title-input");
       const playerFrame = card.querySelector(".player-frame");
       const sourceUrl = card.querySelector(".source-url");
-      const dragHandle = card.querySelector(".drag-handle");
       const expandBtn = card.querySelector(".expand-btn");
       const removeBtn = card.querySelector(".remove-btn");
 
@@ -179,11 +178,16 @@
         openFocus(stream);
       });
 
-      dragHandle.addEventListener("dragstart", function (event) {
+      card.addEventListener("dragstart", function (event) {
+        if (isInteractiveDragTarget(event.target)) {
+          event.preventDefault();
+          return;
+        }
+
         handleDragStart(event, stream.id, card);
       });
 
-      dragHandle.addEventListener("dragend", clearDragState);
+      card.addEventListener("dragend", clearDragState);
       card.addEventListener("dragover", handleDragOver);
       card.addEventListener("dragleave", function () {
         card.classList.remove("is-drop-target");
@@ -228,6 +232,10 @@
     event.dataTransfer.effectAllowed = "move";
     event.dataTransfer.setData(DRAG_ID_TYPE, streamId);
     card.classList.add("is-dragging");
+  }
+
+  function isInteractiveDragTarget(target) {
+    return Boolean(target.closest("input, textarea, button, iframe"));
   }
 
   function handleDragOver(event) {

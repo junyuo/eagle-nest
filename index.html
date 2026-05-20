@@ -8,7 +8,7 @@
       content="Eagle Nest 是一個可部署到 GitHub Pages 的多 YouTube 直播觀看工具。"
     >
     <title>Eagle Nest</title>
-    <link rel="stylesheet" href="styles.css?v=8">
+    <link rel="stylesheet" href="styles.css?v=9">
   </head>
   <body>
     <header class="app-header">
@@ -97,11 +97,10 @@
     </div>
 
     <template id="streamCardTemplate">
-      <article class="stream-card">
+      <article class="stream-card" draggable="true" title="按住卡片可拖曳排序">
         <div class="card-topline">
           <input class="card-title-input" type="text" aria-label="直播標題">
           <div class="card-actions">
-            <button class="small-button drag-handle" type="button" title="拖曳排序" aria-label="拖曳排序" draggable="true">排序</button>
             <button class="small-button expand-btn" type="button" title="放大">放大</button>
             <button class="small-button remove-btn" type="button" title="移除">移除</button>
           </div>
@@ -111,6 +110,6 @@
       </article>
     </template>
 
-    <script src="script.js?v=8"></script>
+    <script src="script.js?v=9"></script>
   </body>
 </html>
