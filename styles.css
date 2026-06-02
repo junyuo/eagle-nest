@@ -465,6 +465,7 @@ textarea:focus {
 }
 
 .card-title-input,
+.card-url-input,
 .small-button,
 .player-frame iframe {
   cursor: auto;
@@ -489,12 +490,27 @@ textarea:focus {
 }
 
 .source-url {
-  overflow: hidden;
+  display: grid;
+  gap: 6px;
   margin: 0;
-  padding: 9px 12px 11px;
+  padding: 10px 12px 12px;
   font-size: 0.78rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+}
+
+.source-url span {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.card-url-input {
+  min-height: 34px;
+  padding: 7px 9px;
+  font-size: 0.82rem;
+}
+
+.card-url-input.is-error {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px rgba(180, 35, 24, 0.14);
 }
 
 .focus-overlay {

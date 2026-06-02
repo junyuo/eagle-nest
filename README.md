@@ -5,6 +5,7 @@ Eagle Nest 是一個純 HTML/CSS/JavaScript 的靜態網站，可同時觀看多
 ## 功能
 
 - 輸入多個 YouTube 直播網址
+- 已加入的直播卡片可直接修改直播網址
 - 自動轉成 YouTube embed 播放器
 - 支援 2x2 與 3x3 grid
 - 每個直播卡片可自訂標題

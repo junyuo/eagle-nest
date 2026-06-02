@@ -162,19 +162,30 @@
       const card = template.content.firstElementChild.cloneNode(true);
       const titleField = card.querySelector(".card-title-input");
       const playerFrame = card.querySelector(".player-frame");
-      const sourceUrl = card.querySelector(".source-url");
+      const urlField = card.querySelector(".card-url-input");
       const expandBtn = card.querySelector(".expand-btn");
       const removeBtn = card.querySelector(".remove-btn");
 
       card.dataset.streamId = stream.id;
       titleField.value = stream.title;
-      sourceUrl.textContent = stream.url;
-      sourceUrl.title = stream.url;
+      urlField.value = stream.url;
       playerFrame.appendChild(createIframe(stream));
 
       titleField.addEventListener("input", function () {
         stream.title = titleField.value.trim() || "未命名直播";
         saveState();
+      });
+
+      urlField.addEventListener("change", function () {
+        updateStreamUrl(stream, urlField, playerFrame);
+      });
+
+      urlField.addEventListener("keydown", function (event) {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          updateStreamUrl(stream, urlField, playerFrame);
+          urlField.blur();
+        }
       });
 
       expandBtn.addEventListener("click", function () {
@@ -503,6 +514,33 @@
   function setHint(message, isError) {
     formHint.textContent = message;
     formHint.classList.toggle("is-error", Boolean(isError));
+  }
+
+  function updateStreamUrl(stream, urlField, playerFrame) {
+    const nextUrl = urlField.value.trim();
+    const nextVideoId = extractYouTubeVideoId(nextUrl);
+
+    if (!nextVideoId) {
+      urlField.classList.add("is-error");
+      setHint("這個 YouTube 網址無法辨識，播放器尚未更新。", true);
+      return;
+    }
+
+    urlField.classList.remove("is-error");
+    stream.url = nextUrl;
+    stream.videoId = nextVideoId;
+    saveState();
+
+    playerFrame.innerHTML = "";
+    playerFrame.appendChild(createIframe(stream));
+
+    if (state.allMuted) {
+      setTimeout(function () {
+        sendCommand(playerFrame.querySelector("iframe"), "mute");
+      }, 600);
+    }
+
+    setHint("已更新「" + stream.title + "」的直播網址。", false);
   }
 
   function updateControls() {
