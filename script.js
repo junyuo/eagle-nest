@@ -1,8 +1,10 @@
 (function () {
   const STORAGE_KEY = "eagleNestState:v1";
+  const STORAGE_VERSION = 2;
   const LIVE_SYNC_INTERVAL_MS = 5 * 60 * 1000;
   const DRAG_ID_TYPE = "text/plain";
   const DEFAULT_STATE = {
+    version: STORAGE_VERSION,
     streams: [],
     gridSize: 2,
     allMuted: false,
@@ -11,6 +13,7 @@
   };
   let autoSyncTimer = null;
   let draggedStreamId = null;
+  let dragFrame = null;
 
   const state = loadState();
   const appShell = document.querySelector("#appShell");
@@ -137,8 +140,10 @@
     const stream = {
       id: createId(),
       title: title.trim() || "YouTube Live " + (state.streams.length + 1),
+      defaultTitle: "YouTube Live " + (state.streams.length + 1),
       url: normalizedUrl,
-      videoId: videoId
+      videoId: videoId,
+      status: "播放器已載入"
     };
 
     state.streams.push(stream);
@@ -162,30 +167,46 @@
       const card = template.content.firstElementChild.cloneNode(true);
       const titleField = card.querySelector(".card-title-input");
       const playerFrame = card.querySelector(".player-frame");
+      const statusText = card.querySelector(".card-status");
       const urlField = card.querySelector(".card-url-input");
+      const updateUrlBtn = card.querySelector(".update-url-btn");
       const expandBtn = card.querySelector(".expand-btn");
       const removeBtn = card.querySelector(".remove-btn");
 
       card.dataset.streamId = stream.id;
       titleField.value = stream.title;
       urlField.value = stream.url;
-      playerFrame.appendChild(createIframe(stream));
+      updateCardStatus(statusText, stream.status || "播放器已載入", "neutral");
+      playerFrame.appendChild(createIframe(stream, { autoplay: false }));
 
       titleField.addEventListener("input", function () {
-        stream.title = titleField.value.trim() || "未命名直播";
+        const nextTitle = titleField.value.trim();
+        stream.title = nextTitle || stream.defaultTitle || "未命名直播";
         saveState();
       });
 
-      urlField.addEventListener("change", function () {
-        updateStreamUrl(stream, urlField, playerFrame);
+      titleField.addEventListener("blur", function () {
+        if (titleField.value.trim()) return;
+
+        titleField.value = stream.defaultTitle || "未命名直播";
+        stream.title = titleField.value;
+        saveState();
+      });
+
+      urlField.addEventListener("input", function () {
+        urlField.classList.remove("is-error");
       });
 
       urlField.addEventListener("keydown", function (event) {
         if (event.key === "Enter") {
           event.preventDefault();
-          updateStreamUrl(stream, urlField, playerFrame);
+          updateStreamUrl(stream, urlField, playerFrame, statusText);
           urlField.blur();
         }
+      });
+
+      updateUrlBtn.addEventListener("click", function () {
+        updateStreamUrl(stream, urlField, playerFrame, statusText);
       });
 
       expandBtn.addEventListener("click", function () {
@@ -219,12 +240,14 @@
         sendCommandToAll("mute");
       }, 600);
     }
+
+    scheduleAutoSync();
   }
 
   function openFocus(stream) {
     focusTitle.textContent = stream.title;
     focusPlayer.innerHTML = "";
-    focusPlayer.appendChild(createIframe(stream, true));
+    focusPlayer.appendChild(createIframe(stream, { autoplay: true }));
     focusOverlay.hidden = false;
     document.body.style.overflow = "hidden";
 
@@ -251,9 +274,19 @@
 
     event.preventDefault();
     event.dataTransfer.dropEffect = "move";
+    if (dragFrame) return;
 
+    const clientX = event.clientX;
+    const clientY = event.clientY;
+    dragFrame = requestAnimationFrame(function () {
+      dragFrame = null;
+      updateDragPosition(clientX, clientY);
+    });
+  }
+
+  function updateDragPosition(clientX, clientY) {
     const draggedCard = getDraggedCard();
-    const targetCard = getNearestCard(event.clientX, event.clientY);
+    const targetCard = getNearestCard(clientX, clientY);
     if (!draggedCard) return;
 
     clearDropTargets();
@@ -263,14 +296,16 @@
       return;
     }
 
+    const insertAfter = shouldInsertAfter(clientX, clientY, targetCard);
     targetCard.classList.add("is-drop-target");
-    grid.insertBefore(draggedCard, shouldInsertAfter(event, targetCard) ? targetCard.nextElementSibling : targetCard);
+    targetCard.classList.add(insertAfter ? "insert-after" : "insert-before");
+    grid.insertBefore(draggedCard, insertAfter ? targetCard.nextElementSibling : targetCard);
   }
 
-  function shouldInsertAfter(event, card) {
+  function shouldInsertAfter(clientX, clientY, card) {
     const rect = card.getBoundingClientRect();
-    const lowerHalf = event.clientY > rect.top + rect.height / 2;
-    const rightHalf = event.clientX > rect.left + rect.width / 2;
+    const lowerHalf = clientY > rect.top + rect.height / 2;
+    const rightHalf = clientX > rect.left + rect.width / 2;
     return lowerHalf || rightHalf;
   }
 
@@ -299,6 +334,10 @@
   }
 
   function finishDragSort() {
+    if (dragFrame) {
+      cancelAnimationFrame(dragFrame);
+      dragFrame = null;
+    }
     persistStreamOrderFromDom();
     draggedStreamId = null;
     clearDragState();
@@ -328,14 +367,14 @@
 
   function clearDragState() {
     clearDropTargets();
-    grid.querySelectorAll(".is-dragging, .is-drop-target").forEach(function (card) {
-      card.classList.remove("is-dragging", "is-drop-target");
+    grid.querySelectorAll(".is-dragging, .is-drop-target, .insert-before, .insert-after").forEach(function (card) {
+      card.classList.remove("is-dragging", "is-drop-target", "insert-before", "insert-after");
     });
   }
 
   function clearDropTargets() {
-    grid.querySelectorAll(".is-drop-target").forEach(function (card) {
-      card.classList.remove("is-drop-target");
+    grid.querySelectorAll(".is-drop-target, .insert-before, .insert-after").forEach(function (card) {
+      card.classList.remove("is-drop-target", "insert-before", "insert-after");
     });
   }
 
@@ -354,6 +393,7 @@
     closeFocus();
     saveState();
     render();
+    scheduleAutoSync();
     setHint("清單已清空。", false);
   }
 
@@ -380,7 +420,7 @@
       autoSyncTimer = null;
     }
 
-    if (!state.autoSync) return;
+    if (!state.autoSync || !state.streams.length) return;
 
     autoSyncTimer = setInterval(function () {
       syncAllStreams(false, false);
@@ -398,6 +438,17 @@
     iframes.forEach(function (iframe) {
       syncIframeToLiveEdge(iframe, hardReload);
     });
+
+    updateAllCardStatuses(
+      hardReload ? "正在強制同步到最新..." : "已自動同步 " + formatTime(new Date()),
+      hardReload ? "working" : "neutral"
+    );
+
+    if (hardReload) {
+      setTimeout(function () {
+        updateAllCardStatuses("已同步到最新 " + formatTime(new Date()), "neutral");
+      }, 1200);
+    }
 
     if (showMessage) {
       setHint("已嘗試將所有播放器同步到直播最新位置。", false);
@@ -434,7 +485,8 @@
     iframe.src = url.toString();
   }
 
-  function createIframe(stream, autoplay) {
+  function createIframe(stream, options) {
+    const iframeOptions = options || {};
     const iframe = document.createElement("iframe");
     const params = new URLSearchParams({
       enablejsapi: "1",
@@ -444,7 +496,7 @@
     });
 
     if (location.origin && location.origin !== "null") params.set("origin", location.origin);
-    if (autoplay) params.set("autoplay", "1");
+    if (iframeOptions.autoplay) params.set("autoplay", "1");
     if (state.allMuted) params.set("mute", "1");
 
     iframe.src = "https://www.youtube.com/embed/" + stream.videoId + "?" + params.toString();
@@ -516,23 +568,26 @@
     formHint.classList.toggle("is-error", Boolean(isError));
   }
 
-  function updateStreamUrl(stream, urlField, playerFrame) {
+  function updateStreamUrl(stream, urlField, playerFrame, statusText) {
     const nextUrl = urlField.value.trim();
     const nextVideoId = extractYouTubeVideoId(nextUrl);
 
     if (!nextVideoId) {
       urlField.classList.add("is-error");
+      updateCardStatus(statusText, "網址無法辨識，播放器未更新", "error");
       setHint("這個 YouTube 網址無法辨識，播放器尚未更新。", true);
       return;
     }
 
     urlField.classList.remove("is-error");
+    updateCardStatus(statusText, "正在更新播放器...", "working");
     stream.url = nextUrl;
     stream.videoId = nextVideoId;
+    maybeRefreshDefaultTitle(stream);
     saveState();
 
     playerFrame.innerHTML = "";
-    playerFrame.appendChild(createIframe(stream));
+    playerFrame.appendChild(createIframe(stream, { autoplay: true }));
 
     if (state.allMuted) {
       setTimeout(function () {
@@ -540,7 +595,45 @@
       }, 600);
     }
 
+    stream.status = "網址已更新 " + formatTime(new Date());
+    updateCardStatus(statusText, stream.status, "neutral");
     setHint("已更新「" + stream.title + "」的直播網址。", false);
+  }
+
+  function updateCardStatus(statusText, message, tone) {
+    if (!statusText) return;
+    statusText.textContent = message;
+    statusText.classList.toggle("is-error", tone === "error");
+    statusText.classList.toggle("is-working", tone === "working");
+  }
+
+  function updateAllCardStatuses(message, tone) {
+    grid.querySelectorAll(".stream-card").forEach(function (card) {
+      const stream = findStream(card.dataset.streamId);
+      if (stream) stream.status = message;
+      updateCardStatus(card.querySelector(".card-status"), message, tone);
+    });
+    saveState();
+  }
+
+  function findStream(streamId) {
+    return state.streams.find(function (stream) {
+      return stream.id === streamId;
+    });
+  }
+
+  function formatTime(date) {
+    return date.toLocaleTimeString("zh-TW", {
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+  }
+
+  function maybeRefreshDefaultTitle(stream) {
+    if (!stream.defaultTitle || stream.title !== stream.defaultTitle) return;
+
+    stream.defaultTitle = "YouTube Live " + (state.streams.indexOf(stream) + 1);
+    stream.title = stream.defaultTitle;
   }
 
   function updateControls() {
@@ -577,15 +670,22 @@
       if (!saved || !Array.isArray(saved.streams)) return { ...DEFAULT_STATE };
 
       return {
+        version: STORAGE_VERSION,
         streams: saved.streams
-          .map(function (stream) {
+          .map(function (stream, index) {
             const videoId = stream.videoId || extractYouTubeVideoId(stream.url || "");
+            const fallbackTitle = stream.title || "未命名直播";
+            const fallbackDefaultTitle = /^YouTube Live \d+$/.test(fallbackTitle)
+              ? fallbackTitle
+              : "YouTube Live " + (index + 1);
             return videoId
               ? {
                   id: stream.id || createId(),
-                  title: stream.title || "未命名直播",
+                  title: fallbackTitle,
+                  defaultTitle: stream.defaultTitle || fallbackDefaultTitle,
                   url: stream.url,
-                  videoId: videoId
+                  videoId: videoId,
+                  status: stream.status || "播放器已載入"
                 }
               : null;
           })
@@ -601,6 +701,7 @@
   }
 
   function saveState() {
+    state.version = STORAGE_VERSION;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   }
 })();

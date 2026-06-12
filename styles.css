@@ -417,6 +417,7 @@ textarea:focus {
 }
 
 .stream-card {
+  position: relative;
   min-width: 0;
   overflow: hidden;
   background: var(--surface);
@@ -438,6 +439,27 @@ textarea:focus {
 .stream-card.is-drop-target {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.16), 0 8px 22px rgba(24, 36, 33, 0.08);
+}
+
+.stream-card.insert-before::before,
+.stream-card.insert-after::after {
+  position: absolute;
+  right: 8px;
+  left: 8px;
+  z-index: 2;
+  height: 4px;
+  content: "";
+  background: var(--accent);
+  border-radius: 999px;
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.14);
+}
+
+.stream-card.insert-before::before {
+  top: 6px;
+}
+
+.stream-card.insert-after::after {
+  bottom: 6px;
 }
 
 .card-topline {
@@ -489,6 +511,23 @@ textarea:focus {
   border: 0;
 }
 
+.card-status {
+  min-height: 28px;
+  margin: 0;
+  padding: 8px 12px 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.card-status.is-error {
+  color: var(--danger);
+}
+
+.card-status.is-working {
+  color: var(--accent-dark);
+}
+
 .source-url {
   display: grid;
   gap: 6px;
@@ -500,6 +539,12 @@ textarea:focus {
 .source-url span {
   color: var(--muted);
   font-weight: 800;
+}
+
+.url-edit-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
 }
 
 .card-url-input {
@@ -614,9 +659,14 @@ textarea:focus {
   .primary-button,
   .icon-button,
   .ghost-button,
+  .update-url-btn,
   .small-button {
     width: 100%;
     justify-content: center;
+  }
+
+  .url-edit-row {
+    grid-template-columns: 1fr;
   }
 
   .panel-heading {
