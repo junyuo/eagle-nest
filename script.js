@@ -440,13 +440,13 @@
     });
 
     updateAllCardStatuses(
-      hardReload ? "正在強制同步到最新..." : "已自動同步 " + formatTime(new Date()),
+      hardReload ? "正在強制同步到最新..." : "自動 " + formatTime(new Date()),
       hardReload ? "working" : "neutral"
     );
 
     if (hardReload) {
       setTimeout(function () {
-        updateAllCardStatuses("已同步到最新 " + formatTime(new Date()), "neutral");
+        updateAllCardStatuses("同步 " + formatTime(new Date()), "neutral");
       }, 1200);
     }
 

@@ -464,6 +464,8 @@ textarea:focus {
 
 .card-topline {
   gap: 10px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   justify-content: space-between;
   padding: 10px;
   border-bottom: 1px solid var(--border);
@@ -512,12 +514,17 @@ textarea:focus {
 }
 
 .card-status {
-  min-height: 28px;
+  align-self: center;
+  min-height: 0;
   margin: 0;
-  padding: 8px 12px 0;
+  padding: 5px 8px;
   color: var(--muted);
-  font-size: 0.78rem;
+  background: var(--surface-strong);
+  border-radius: 999px;
+  font-size: 0.72rem;
   font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .card-status[hidden] {
@@ -525,11 +532,25 @@ textarea:focus {
 }
 
 .card-status.is-error {
+  grid-column: 1 / -1;
+  width: 100%;
+  padding: 8px 10px;
   color: var(--danger);
+  background: rgba(180, 35, 24, 0.08);
+  border-radius: 8px;
+  line-height: 1.25;
+  white-space: normal;
 }
 
 .card-status.is-working {
+  grid-column: 1 / -1;
+  width: 100%;
+  padding: 8px 10px;
   color: var(--accent-dark);
+  background: rgba(15, 118, 110, 0.1);
+  border-radius: 8px;
+  line-height: 1.25;
+  white-space: normal;
 }
 
 .source-url {
@@ -636,10 +657,13 @@ textarea:focus {
 @media (max-width: 680px) {
   .app-header,
   .inline-fields,
-  .card-topline,
   .focus-toolbar {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .card-topline {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .header-actions,
