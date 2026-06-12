@@ -143,7 +143,7 @@
       defaultTitle: "YouTube Live " + (state.streams.length + 1),
       url: normalizedUrl,
       videoId: videoId,
-      status: "播放器已載入"
+      status: ""
     };
 
     state.streams.push(stream);
@@ -176,7 +176,7 @@
       card.dataset.streamId = stream.id;
       titleField.value = stream.title;
       urlField.value = stream.url;
-      updateCardStatus(statusText, stream.status || "播放器已載入", "neutral");
+      updateCardStatus(statusText, stream.status || "", "neutral");
       playerFrame.appendChild(createIframe(stream, { autoplay: false }));
 
       titleField.addEventListener("input", function () {
@@ -603,6 +603,7 @@
   function updateCardStatus(statusText, message, tone) {
     if (!statusText) return;
     statusText.textContent = message;
+    statusText.hidden = !message;
     statusText.classList.toggle("is-error", tone === "error");
     statusText.classList.toggle("is-working", tone === "working");
   }
@@ -685,7 +686,7 @@
                   defaultTitle: stream.defaultTitle || fallbackDefaultTitle,
                   url: stream.url,
                   videoId: videoId,
-                  status: stream.status || "播放器已載入"
+                  status: stream.status || ""
                 }
               : null;
           })

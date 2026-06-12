@@ -520,6 +520,10 @@ textarea:focus {
   font-weight: 700;
 }
 
+.card-status[hidden] {
+  display: none;
+}
+
 .card-status.is-error {
   color: var(--danger);
 }
@@ -530,15 +534,9 @@ textarea:focus {
 
 .source-url {
   display: grid;
-  gap: 6px;
   margin: 0;
   padding: 10px 12px 12px;
   font-size: 0.78rem;
-}
-
-.source-url span {
-  color: var(--muted);
-  font-weight: 800;
 }
 
 .url-edit-row {
