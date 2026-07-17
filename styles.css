@@ -44,7 +44,7 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  padding: 28px clamp(18px, 4vw, 48px);
+  padding: 20px clamp(18px, 4vw, 48px);
   background: #10201d;
   color: #ffffff;
 }
@@ -65,8 +65,8 @@ p {
 }
 
 h1 {
-  margin-bottom: 0;
-  font-size: clamp(1.65rem, 3.5vw, 2.7rem);
+  margin-bottom: 6px;
+  font-size: clamp(1.45rem, 2.4vw, 2rem);
   line-height: 1.12;
 }
 
@@ -86,7 +86,15 @@ h2 {
 
 .header-actions {
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.watch-summary {
+  margin: 0;
+  color: #b5d4cf;
+  font-size: 0.9rem;
+  font-weight: 650;
 }
 
 .app-shell {
@@ -172,7 +180,8 @@ h2 {
 .form-hint,
 .source-url,
 .bulk-import label,
-.empty-state p {
+.empty-state p,
+.stream-list-empty {
   color: var(--muted);
 }
 
@@ -266,6 +275,34 @@ h2 {
 .stream-form {
   display: grid;
   gap: 8px;
+}
+
+.panel-section {
+  display: grid;
+  gap: 10px;
+}
+
+.panel-section h2 {
+  margin: 0;
+  font-size: 0.98rem;
+}
+
+.section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.count-badge {
+  min-width: 28px;
+  padding: 3px 8px;
+  color: var(--accent-dark);
+  background: rgba(15, 118, 110, 0.1);
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-align: center;
 }
 
 label {
@@ -383,6 +420,56 @@ textarea:focus {
   margin-top: 10px;
 }
 
+.stream-list-section {
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+}
+
+.panel-stream-list {
+  display: grid;
+  gap: 8px;
+}
+
+.stream-list-empty {
+  margin: 0;
+  font-size: 0.88rem;
+}
+
+.panel-stream-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  padding: 9px;
+  background: var(--surface-strong);
+  border: 1px solid transparent;
+  border-radius: 8px;
+}
+
+.panel-stream-item strong,
+.panel-stream-item span {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.panel-stream-item strong {
+  font-size: 0.9rem;
+}
+
+.panel-stream-item span {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.panel-stream-item button {
+  min-height: 32px;
+  padding: 0 9px;
+}
+
 .watch-area {
   min-width: 0;
 }
@@ -424,12 +511,7 @@ textarea:focus {
   border: 1px solid var(--border);
   border-radius: 8px;
   box-shadow: 0 8px 22px rgba(24, 36, 33, 0.08);
-  cursor: grab;
   transition: border-color 140ms ease, box-shadow 140ms ease, opacity 140ms ease;
-}
-
-.stream-card:active {
-  cursor: grabbing;
 }
 
 .stream-card.is-dragging {
@@ -463,18 +545,62 @@ textarea:focus {
 }
 
 .card-topline {
-  gap: 10px;
+  align-items: center;
+  gap: 8px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
   justify-content: space-between;
   padding: 10px;
   border-bottom: 1px solid var(--border);
+}
+
+.drag-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 36px;
+  padding: 0;
+  color: var(--muted);
+  background: var(--surface-strong);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: grab;
+  font-size: 1rem;
+  font-weight: 900;
+  letter-spacing: -0.18em;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
 }
 
 .card-title-input {
   min-height: 38px;
   padding: 8px 10px;
   font-weight: 800;
+}
+
+.card-title-display {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 0.98rem;
+  font-weight: 850;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stream-card:not(.is-editing) .card-title-input,
+.stream-card:not(.is-editing) .remove-btn,
+.stream-card:not(.is-editing) .card-edit-panel {
+  display: none;
+}
+
+.stream-card.is-editing .card-title-display {
+  display: none;
 }
 
 .card-actions {
@@ -491,8 +617,13 @@ textarea:focus {
 .card-title-input,
 .card-url-input,
 .small-button,
+.drag-handle,
 .player-frame iframe {
   cursor: auto;
+}
+
+.drag-handle {
+  cursor: grab;
 }
 
 .remove-btn {
@@ -532,7 +663,7 @@ textarea:focus {
 }
 
 .card-status.is-error {
-  grid-column: 1 / -1;
+  grid-column: 2 / -1;
   width: 100%;
   padding: 8px 10px;
   color: var(--danger);
@@ -543,7 +674,7 @@ textarea:focus {
 }
 
 .card-status.is-working {
-  grid-column: 1 / -1;
+  grid-column: 2 / -1;
   width: 100%;
   padding: 8px 10px;
   color: var(--accent-dark);
@@ -556,8 +687,13 @@ textarea:focus {
 .source-url {
   display: grid;
   margin: 0;
-  padding: 10px 12px 12px;
+  padding: 10px;
   font-size: 0.78rem;
+}
+
+.card-edit-panel {
+  border-top: 1px solid var(--border);
+  background: #fbfcfc;
 }
 
 .url-edit-row {
@@ -575,6 +711,22 @@ textarea:focus {
 .card-url-input.is-error {
   border-color: var(--danger);
   box-shadow: 0 0 0 3px rgba(180, 35, 24, 0.14);
+}
+
+.toast {
+  position: fixed;
+  right: clamp(14px, 3vw, 30px);
+  bottom: 20px;
+  z-index: 20;
+  max-width: min(360px, calc(100vw - 28px));
+  padding: 11px 14px;
+  color: #ffffff;
+  background: #10201d;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  font-size: 0.92rem;
+  font-weight: 750;
 }
 
 .focus-overlay {
@@ -618,11 +770,12 @@ textarea:focus {
 @media (max-width: 980px) {
   .app-shell {
     grid-template-columns: 1fr;
+    gap: 16px;
   }
 
   .app-shell.is-panel-collapsed,
   .app-shell:has(#controlDetails:not([open])) {
-    grid-template-columns: 52px minmax(0, 1fr);
+    grid-template-columns: 1fr;
   }
 
   .control-panel {
@@ -636,7 +789,7 @@ textarea:focus {
 
   .control-panel.is-collapsed .panel-heading,
   .control-panel:has(#controlDetails:not([open])) .panel-heading {
-    justify-content: center;
+    justify-content: flex-start;
   }
 
   .control-panel.is-collapsed .panel-title,
@@ -663,13 +816,24 @@ textarea:focus {
   }
 
   .card-topline {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: auto minmax(0, 1fr);
   }
 
   .header-actions,
   .card-actions {
     display: grid;
     grid-template-columns: 1fr 1fr;
+  }
+
+  .card-status,
+  .card-actions,
+  .card-status.is-error,
+  .card-status.is-working {
+    grid-column: 1 / -1;
+  }
+
+  .card-actions {
+    width: 100%;
   }
 
   .stream-grid.grid-2,
@@ -705,7 +869,9 @@ textarea:focus {
   .control-panel.is-collapsed .collapse-button,
   .control-panel:has(#controlDetails:not([open])) .collapse-button {
     justify-content: center;
-    width: 40px;
+    width: 100%;
+    height: 42px;
+    min-height: 42px;
   }
 
   .control-panel.is-collapsed .panel-description,

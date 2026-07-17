@@ -20,6 +20,7 @@
   const controlPanel = document.querySelector("#controlPanel");
   const controlDetails = document.querySelector("#controlDetails");
   const panelBody = document.querySelector("#panelBody");
+  const watchSummary = document.querySelector("#watchSummary");
   const streamForm = document.querySelector("#streamForm");
   const titleInput = document.querySelector("#streamTitle");
   const urlInput = document.querySelector("#streamUrl");
@@ -34,10 +35,14 @@
   const clearAllBtn = document.querySelector("#clearAllBtn");
   const importBtn = document.querySelector("#importBtn");
   const bulkInput = document.querySelector("#bulkInput");
+  const panelStreamList = document.querySelector("#panelStreamList");
+  const streamCountBadge = document.querySelector("#streamCountBadge");
+  const toast = document.querySelector("#toast");
   const focusOverlay = document.querySelector("#focusOverlay");
   const focusTitle = document.querySelector("#focusTitle");
   const focusPlayer = document.querySelector("#focusPlayer");
   const closeFocusBtn = document.querySelector("#closeFocusBtn");
+  let toastTimer = null;
 
   streamForm.addEventListener("submit", handleAddStream);
   controlDetails.addEventListener("toggle", handlePanelToggle);
@@ -112,6 +117,10 @@
         : "已匯入 " + imported + " 筆直播。",
       rejected > 0
     );
+
+    if (imported > 0 && state.streams.length >= 9) {
+      showToast("目前已加入 " + state.streams.length + " 路直播，長時間監看可能受裝置效能影響。");
+    }
   }
 
   function parseBulkLine(line) {
@@ -152,6 +161,9 @@
       saveState();
       render();
       setHint("已新增「" + stream.title + "」。", false);
+      if (state.streams.length >= 9) {
+        showToast("目前已加入 " + state.streams.length + " 路直播，長時間監看可能受裝置效能影響。");
+      }
     }
 
     return true;
@@ -165,16 +177,20 @@
 
     state.streams.forEach(function (stream) {
       const card = template.content.firstElementChild.cloneNode(true);
+      const dragHandle = card.querySelector(".drag-handle");
       const titleField = card.querySelector(".card-title-input");
+      const titleDisplay = card.querySelector(".card-title-display");
       const playerFrame = card.querySelector(".player-frame");
       const statusText = card.querySelector(".card-status");
       const urlField = card.querySelector(".card-url-input");
       const updateUrlBtn = card.querySelector(".update-url-btn");
+      const editBtn = card.querySelector(".edit-btn");
       const expandBtn = card.querySelector(".expand-btn");
       const removeBtn = card.querySelector(".remove-btn");
 
       card.dataset.streamId = stream.id;
       titleField.value = stream.title;
+      titleDisplay.textContent = stream.title;
       urlField.value = stream.url;
       updateCardStatus(statusText, stream.status || "", "neutral");
       playerFrame.appendChild(createIframe(stream, { autoplay: false }));
@@ -182,7 +198,9 @@
       titleField.addEventListener("input", function () {
         const nextTitle = titleField.value.trim();
         stream.title = nextTitle || stream.defaultTitle || "未命名直播";
+        titleDisplay.textContent = stream.title;
         saveState();
+        renderPanelStreamList();
       });
 
       titleField.addEventListener("blur", function () {
@@ -190,7 +208,9 @@
 
         titleField.value = stream.defaultTitle || "未命名直播";
         stream.title = titleField.value;
+        titleDisplay.textContent = stream.title;
         saveState();
+        renderPanelStreamList();
       });
 
       urlField.addEventListener("input", function () {
@@ -209,16 +229,15 @@
         updateStreamUrl(stream, urlField, playerFrame, statusText);
       });
 
+      editBtn.addEventListener("click", function () {
+        toggleCardEditing(card, editBtn, titleField);
+      });
+
       expandBtn.addEventListener("click", function () {
         openFocus(stream);
       });
 
-      card.addEventListener("dragstart", function (event) {
-        if (isInteractiveDragTarget(event.target)) {
-          event.preventDefault();
-          return;
-        }
-
+      dragHandle.addEventListener("dragstart", function (event) {
         handleDragStart(event, stream.id, card);
       });
 
@@ -234,6 +253,8 @@
 
       grid.appendChild(card);
     });
+
+    renderPanelStreamList();
 
     if (state.allMuted) {
       setTimeout(function () {
@@ -265,8 +286,20 @@
     card.classList.add("is-dragging");
   }
 
-  function isInteractiveDragTarget(target) {
-    return Boolean(target.closest("input, textarea, button, iframe"));
+  function toggleCardEditing(card, editBtn, titleField, forceOpen) {
+    const shouldOpen = typeof forceOpen === "boolean" ? forceOpen : !card.classList.contains("is-editing");
+    const editPanel = card.querySelector(".card-edit-panel");
+    card.classList.toggle("is-editing", shouldOpen);
+    if (editPanel) editPanel.hidden = !shouldOpen;
+    editBtn.setAttribute("aria-expanded", String(shouldOpen));
+    editBtn.textContent = shouldOpen ? "完成" : "編輯";
+
+    if (shouldOpen) {
+      setTimeout(function () {
+        titleField.focus();
+        titleField.select();
+      }, 0);
+    }
   }
 
   function handleGridDragOver(event) {
@@ -363,6 +396,8 @@
       })
       .filter(Boolean);
     saveState();
+    renderPanelStreamList();
+    updateControls();
   }
 
   function clearDragState() {
@@ -395,6 +430,7 @@
     render();
     scheduleAutoSync();
     setHint("清單已清空。", false);
+    showToast("清單已清空");
   }
 
   function toggleMuteAll() {
@@ -412,6 +448,7 @@
     updateControls();
     scheduleAutoSync();
     setHint(state.autoSync ? "自動同步已開啟，每 5 分鐘校正一次。" : "自動同步已關閉。", false);
+    showToast(state.autoSync ? "自動同步已開啟" : "自動同步已關閉");
   }
 
   function scheduleAutoSync() {
@@ -451,7 +488,9 @@
     }
 
     if (showMessage) {
+      const message = "已同步 " + iframes.length + " 路直播";
       setHint("已嘗試將所有播放器同步到直播最新位置。", false);
+      showToast(message);
     }
   }
 
@@ -598,6 +637,8 @@
     stream.status = "網址已更新 " + formatTime(new Date());
     updateCardStatus(statusText, stream.status, "neutral");
     setHint("已更新「" + stream.title + "」的直播網址。", false);
+    renderPanelStreamList();
+    showToast("已更新直播網址");
   }
 
   function updateCardStatus(statusText, message, tone) {
@@ -647,6 +688,15 @@
     muteAllBtn.querySelector("span:last-child").textContent = state.allMuted ? "取消靜音" : "靜音全部";
     autoSyncBtn.setAttribute("aria-pressed", String(state.autoSync));
     autoSyncBtn.textContent = state.autoSync ? "自動同步：開" : "自動同步：關";
+    watchSummary.textContent =
+      state.streams.length +
+      " 路直播 · " +
+      state.gridSize +
+      "x" +
+      state.gridSize +
+      " · 自動同步" +
+      (state.autoSync ? "開啟" : "關閉");
+    streamCountBadge.textContent = String(state.streams.length);
 
     appShell.classList.toggle("is-panel-collapsed", state.panelCollapsed);
     controlPanel.classList.toggle("is-collapsed", state.panelCollapsed);
@@ -655,6 +705,65 @@
     }
     panelBody.setAttribute("aria-hidden", String(state.panelCollapsed));
     controlDetails.querySelector(".collapse-text").textContent = state.panelCollapsed ? "展開" : "收合";
+  }
+
+  function renderPanelStreamList() {
+    panelStreamList.innerHTML = "";
+
+    if (!state.streams.length) {
+      const empty = document.createElement("p");
+      empty.className = "stream-list-empty";
+      empty.textContent = "尚未加入直播。";
+      panelStreamList.appendChild(empty);
+      return;
+    }
+
+    state.streams.forEach(function (stream) {
+      const item = document.createElement("div");
+      const text = document.createElement("div");
+      const title = document.createElement("strong");
+      const url = document.createElement("span");
+      const edit = document.createElement("button");
+
+      item.className = "panel-stream-item";
+      title.textContent = stream.title;
+      url.textContent = stream.url;
+      edit.className = "small-button";
+      edit.type = "button";
+      edit.textContent = "編輯";
+      edit.addEventListener("click", function () {
+        openCardEditor(stream.id);
+      });
+
+      text.appendChild(title);
+      text.appendChild(url);
+      item.appendChild(text);
+      item.appendChild(edit);
+      panelStreamList.appendChild(item);
+    });
+  }
+
+  function openCardEditor(streamId) {
+    const card = grid.querySelector("[data-stream-id='" + streamId + "']");
+    if (!card) return;
+
+    const editBtn = card.querySelector(".edit-btn");
+    const titleField = card.querySelector(".card-title-input");
+    toggleCardEditing(card, editBtn, titleField, true);
+    card.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
+  function showToast(message) {
+    if (!toast) return;
+
+    toast.textContent = message;
+    toast.hidden = false;
+
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () {
+      toast.hidden = true;
+      toastTimer = null;
+    }, 2600);
   }
 
   function createId() {
